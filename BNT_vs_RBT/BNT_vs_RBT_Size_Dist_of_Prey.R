@@ -1,6 +1,7 @@
 ###############################################################################
 #                                                                      Feb 2019 
-#           Logistic Regression of Fish Prey in BNT & RBT Diets
+#                Quick look at the size distribution of prey
+#                             RBT vs BNT 
 #
 # Notes: 
 # *
