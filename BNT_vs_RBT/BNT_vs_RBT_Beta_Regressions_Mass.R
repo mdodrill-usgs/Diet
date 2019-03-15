@@ -74,8 +74,8 @@ keep = c("CHIL", "SIML", "CHIP", "CHIA", "SIMA", "SIMP", "HEMA", "GAMM", "HYMA",
          "COLE", "NZMS")
 
 # taxa that show up in > 1% of samples
-keep = c("TAMA", "MUSC", "TRIL", "DIPT", "MITE", "TRIA", "FORM", "NZMS", "COLE",
-         "HYMA", "HEMA", "GAMM", "SIMA", "SIMP", "CHIA", "CHIP", "SIML", "CHIL", "SPID")
+# keep = c("TAMA", "MUSC", "TRIL", "DIPT", "MITE", "TRIA", "FORM", "NZMS", "COLE",
+#          "HYMA", "HEMA", "GAMM", "SIMA", "SIMP", "CHIA", "CHIP", "SIML", "CHIL", "SPID")
 
 diet.2 = diet[which(diet$SpeciesID %in% keep),]
 
@@ -104,6 +104,7 @@ for(i in 1:length(id)){
   
   out[[i]] = data.frame(id = sub$PITTagID,
                         species = sub$FishSpecies,
+                        forklength = sub$ForkLength,
                         prey = sub$prey,
                         # turb = sub$ts.mean,
                         prop = sub$TotalMass / total)
@@ -113,13 +114,26 @@ all = do.call(rbind, out)
 
 all$prop = ifelse(all$prop == 1, .99, all$prop)
 
+# theres a bad length in the data
+all$forklength = ifelse(all$forklength >1000, NA, all$forklength)
+
+all$forklength.2 = all$forklength / mean(all$forklength, na.rm = T)
+
+all = all[!is.na(all$forklength),]
+
 #-----------------------------------------------------------------------------#
 # quick plots
+windows(record = T, xpos = 25)
 
 p = ggplot(all, aes(x = prey, y = prop)) +
   geom_boxplot(aes(color = species, fill = species), alpha = .5)
 p 
 
+p = ggplot(all, aes(x = forklength, y = prop)) +
+    geom_point() +
+    lims(x = c(0, 500)) +
+    facet_wrap(~ prey)
+p
 #-----------------------------------------------------------------------------#
 # bnt = all[all$species == "BNT",]
 # rbt = all[all$species == "RBT",]
@@ -155,10 +169,17 @@ fit.4 = brm(prop ~ species + prey,
             data = all, family = "Beta", chains = 3)
 
 fit.5 = brm(prop ~ species * prey,
-            data = all, family = "Beta", chains = 3, iter = 100)
+            data = all, family = "Beta", chains = 3, iter = 500)
+
+fit.6 = brm(prop ~ species * prey + forklength.2,
+            data = all, family = "Beta", chains = 3, iter = 500)
+
+fit.7 = brm(prop ~ species * prey * forklength.2,
+            data = all, family = "Beta", chains = 3, iter = 500)
 
 waic(fit.1, fit.2, fit.3, fit.4, fit.5)
 
+waic(fit.6, fit.7)
 
 #-----------------------------------------------------------------------------#
 effects = data_grid(all, species, prey) %>% add_fitted_draws(fit.5)
@@ -179,6 +200,28 @@ p = ggplot(effects, aes(x = prey2, y = .value)) +
     coord_flip()
 p
 
+#-----------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+effects = data_grid(all, species, prey, forklength.2) %>% add_fitted_draws(fit.7)
+
+# sort based on RBT estimate
+tmp = filter(effects, species == "RBT") %>%
+      group_by(prey) %>%
+      summarise(mean = mean(.value)) %>%
+      arrange(mean)
+
+pred.in = effects[effects$species == "RBT",]
+pred.in = effects[effects$species == "BNT",]
+
+p = ggplot(pred.in, aes(x = forklength.2, y = .value)) +
+    stat_lineribbon(aes(y = .value)) +
+    facet_wrap(~ prey) +
+    labs(title = "BNT")
+    # coord_flip()
+p
+
+
+plot(marginal_effects(fit.6), rug = TRUE, ask = FALSE)
 #-----------------------------------------------------------------------------#
 
 
