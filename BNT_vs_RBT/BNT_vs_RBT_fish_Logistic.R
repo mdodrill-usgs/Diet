@@ -16,9 +16,9 @@ library(ggplot2)
 library(bbmle)
 library(gridExtra)
 
-d.tmp = readDB(gear = "FishGut", type = "Sample", updater = TRUE)
+d.tmp = readDB(gear = "FishGut", type = "Sample", updater = FALSE)
 
-d.1 = d.tmp[d.tmp$SpeciesID %in% c("RBT", "BNT"),]
+d.1 = d.tmp[d.tmp$FishSpeciesID %in% c("RBT", "BNT"),]
 
 #-----------------------------------------------------------------------------#
 dat = sampspec(samp = d.1)
@@ -32,7 +32,7 @@ keep.col = c("PITTagID",
              "Time",
              "RiverMile",
              "Site",
-             "SpeciesID",
+             "FishSpeciesID",
              "ForkLength",
              "Weight")#,
              # "FlagStrange",
@@ -61,9 +61,6 @@ spec.ltl = spec.1[,c(1:2,24)]
 
 diet = left_join(ltl.samps, spec.ltl, by = "PITTagID")
 
-# maybe we should fix this in the data base?
-names(diet)[7] = "FishSpecies"
-names(diet)[10] = "SpeciesID"
 #-----------------------------------------------------------------------------#
 
 dat.1 = group_by(diet, PITTagID) %>%
