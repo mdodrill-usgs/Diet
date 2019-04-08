@@ -70,6 +70,21 @@ dat.in = left_join(ltl.samps, dat.1, by = "PITTagID")
 
 dat.in$FishPrey.2 = ifelse(dat.in$FishPrey >= 1, 1, 0)
 
+# drop the NA for forklength
+dat.in = dat.in[!is.na(dat.in$ForkLength),]
+
+#-----------------------------------------------------------------------------#
+# fit a little model set
+fit.1 = glm(FishPrey.2 ~ ForkLength + FishSpeciesID, data = dat.in, family = binomial)
+fit.2 = glm(FishPrey.2 ~ ForkLength, data = dat.in, family = binomial)
+fit.3 = glm(FishPrey.2 ~ FishSpeciesID, data = dat.in, family = binomial)
+fit.4 = glm(FishPrey.2 ~ 1, data = dat.in, family = binomial)
+
+AIC(fit.1, fit.2, fit.3, fit.4)
+BIC(fit.1, fit.2)
+ICtab(fit.1, fit.2, fit.3, fit.4, type = c("AICc"))
+
+
 #-----------------------------------------------------------------------------#
 # Brown trout section
 bnt = dat.in[dat.in$SpeciesID == "BNT",]
