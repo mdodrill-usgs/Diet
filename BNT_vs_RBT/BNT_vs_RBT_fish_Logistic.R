@@ -108,8 +108,20 @@ ICtab(fit.1, fit.2, fit.3, fit.4, type = c("AICc"))
 
 rbt.min = min(dat.in[dat.in$FishSpeciesID == "RBT",]$ForkLength)
 rbt.max = max(dat.in[dat.in$FishSpeciesID == "RBT",]$ForkLength)
+rbt.mean = mean(dat.in[dat.in$FishSpeciesID == "RBT",]$ForkLength)
+
 bnt.min = min(dat.in[dat.in$FishSpeciesID == "BNT",]$ForkLength)
 bnt.max = max(dat.in[dat.in$FishSpeciesID == "BNT",]$ForkLength)
+bnt.mean = mean(dat.in[dat.in$FishSpeciesID == "BNT",]$ForkLength)
+
+#--------------------------------------
+# pred for the mean size
+my.mean = data.frame(FishSpeciesID = c("RBT", "BNT"),
+                     ForkLength = c(rbt.mean, bnt.mean))
+mu.pred = predict(fit.1, newdata = my.mean, type = "link", se.fit = TRUE)
+
+mu.pred.1 = invlogit(mu.pred$fit)
+#--------------------------------------
 
 new.dat = rbind(data.frame(FishSpeciesID = c("RBT"),
                            ForkLength = seq(rbt.min, rbt.max, 1)),
@@ -125,6 +137,15 @@ y.u = y + (1.96 * tmp$se.fit)
 new.dat$yhat = invlogit(y)
 new.dat$y.l = invlogit(y.l)
 new.dat$y.u = invlogit(y.u)
+
+# Probability of 50% piscivory - BNT
+new.dat[which(round(new.dat$yhat,2) == .5),]
+
+# Probabiliy of piscivory at max size - BNT
+new.dat[which(new.dat$ForkLength == bnt.max),]
+
+# Probabiliy of piscivory at max size - BNT
+new.dat[which(new.dat$ForkLength == rbt.max),]
 
 #-----------------------------------------------------------------------------#
 # plots of both species 
