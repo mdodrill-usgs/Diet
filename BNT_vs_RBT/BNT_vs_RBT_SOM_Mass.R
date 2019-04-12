@@ -79,31 +79,41 @@ test = spread(ltl, SpeciesID, TotalMass)
 
 dat.in = as.matrix(test[,3:ncol(test)])
 
+# not sure about using the log (that's whats used in the fish paper)
+dat.in[dat.in[,] == 0] <- .0001
+# dat.in = as.matrix(log(test[,3:ncol(test)]))
+dat.in = log(dat.in)
+# dat.in[is.infinite(dat.in)] <- 0
+
 fish.sp = as.factor(test[,2])
 
 
-som.fit <- som(scale(dat.in), grid = somgrid(6, 6, "hexagonal"),
+som.fit <- som(scale(dat.in), grid = somgrid(4, 4, "hexagonal"),
                rlen = 1000, dist.fcts = "euclidean")
 
 summary(som.fit)
 
-plot(som.fit, type = c("codes"))
+# colour2 <- tricolor(som.fit$grid, phi = c(pi/6, 0, -pi/6))
+plot(som.fit, type = c("codes"), codeRendering = "segments", shape = "straight")
+# plot(som.fit, type = c("codes"), codeRendering = "segments", shape = "straight", bg = rgb(colour2))
 plot(som.fit, type = c("changes"))
 plot(som.fit, type = c("counts"))
-plot(som.fit, type = c("dist.neighbours"))
-plot(som.fit, type = c("mapping"), col = c("red", "blue")[as.integer(fish.sp)])
-plot(som.fit, type = c("quality"))
+plot(som.fit, type = c("dist.neighbours"), shape = "straight")
+plot(som.fit, type = c("mapping"), col = c("red", "blue")[as.integer(fish.sp)], shape = "straight")
+plot(som.fit, type = c("quality"), shape = "straight")
 
 
-tmp = hclust(dist(som.fit$codes[[1]]), method = "ward.D")
+tmp = hclust(dist(som.fit$codes[[1]]), method = "ward.D2")
 
 plot(tmp)
 
-test2 = cutree(hclust(dist(som.fit$codes[[1]])),4)
+test2 = cutree(hclust(dist(som.fit$codes[[1]])),3)
 
 add.cluster.boundaries(som.fit, test2)
 
-
+#-----------------------------------------------------------------------------#
+# this is for the supervised case, where information about the response
+# (dependent) variable is included. Not sure about using this. 
 xyf.wines <- xyf(scale(dat.in), fish.sp, grid = somgrid(14, 14, "hexagonal"), rlen = 1000)
 summary(xyf.wines)
 
