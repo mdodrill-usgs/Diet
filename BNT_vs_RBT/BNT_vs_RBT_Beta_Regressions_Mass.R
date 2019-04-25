@@ -9,7 +9,9 @@
 #  To Do:
 #  * Clean up the plotting/extracting results part
 #  * Add in other covariates
+#    -- Season or Year effects?
 #  * Add in model selection, looks like it will work with loo/waic!
+#  * seperate analysis of fish size vs number of taxa in diet?
 #
 ###############################################################################
 library(rstan)
@@ -201,7 +203,6 @@ p = ggplot(effects, aes(x = prey2, y = .value)) +
 p
 
 #-----------------------------------------------------------------------------#
-#-----------------------------------------------------------------------------#
 effects = data_grid(all, species, prey, forklength.2) %>% add_fitted_draws(fit.7)
 
 # sort based on RBT estimate
@@ -225,36 +226,5 @@ plot(marginal_effects(fit.6), rug = TRUE, ask = FALSE)
 #-----------------------------------------------------------------------------#
 
 
-# plotting up model results
-# bnt %>%
-#   data_grid(prey) %>%
-#   add_fitted_draws(fit.1) %>%
-#   head(10)
-# 
-# 
-# # bnt %>%
-# #   data_grid(prey) %>%
-# #   add_fitted_draws(fit.1) %>%
-# #   ggplot(aes(x = .value, y = prey)) +
-# #   stat_pointintervalh(.width = c(.66, .95))
-# b.out = bnt %>%
-#   data_grid(prey) %>%
-#   add_fitted_draws(fit.1)
-# 
-# r.out = rbt %>%
-#   data_grid(prey) %>%
-#   add_fitted_draws(fit.2)
-# 
-# 
-# all.out = rbind(b.out, r.out)  
-# all.out$sp = c(rep("BNT", nrow(b.out)), rep("RBT", nrow(r.out)))
-# 
-# # 
-# # p = ggplot(all.out, aes(x = value, y = prey)) +
-# #   stat_pointintervalh()
-# # p  
-# 
-# all.out %>% ggplot(aes(x = .value, y = prey)) +
-#   stat_pointintervalh(.width = c(.66, .95), aes(color = sp), position = "dodge")
 #-----------------------------------------------------------------------------#
 # End
