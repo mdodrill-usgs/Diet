@@ -4,8 +4,8 @@
 #   
 #
 #  Notes:
-#  * No fish mass was collected for the Lavage samples, could estimate this from
-#  L-W
+#  * No fish mass was collected for the Lavage samples, estimate this from
+#  L-W regression
 #
 #  To Do:
 #  *  There are a bunch of mass estimates that are comming out as NA -- > Track
