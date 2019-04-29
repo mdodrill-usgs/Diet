@@ -27,7 +27,7 @@ options (mc.cores=parallel::detectCores()) # Run on multiple cores
 
 d.tmp = readDB(gear = "FishGut", type = "Sample", updater = TRUE)
 
-d.1 = d.tmp[d.tmp$SpeciesID %in% c("RBT", "BNT"),]
+d.1 = d.tmp[d.tmp$FishSpeciesID %in% c("RBT", "BNT"),]
 
 #-----------------------------------------------------------------------------#
 dat = sampspec(samp = d.1)
@@ -41,7 +41,7 @@ keep.col = c("PITTagID",
              "Time",
              "RiverMile",
              "Site",
-             "SpeciesID",
+             "FishSpeciesID",
              "ForkLength",
              "Weight")#,
 # "FlagStrange",
@@ -68,8 +68,8 @@ spec.ltl = spec[,c(1:2,24)]
 diet = left_join(ltl.samps, spec.ltl, by = "PITTagID")
 
 # maybe we should fix this in the data base?
-names(diet)[7] = "FishSpecies"
-names(diet)[10] = "SpeciesID"
+# names(diet)[7] = "FishSpecies"
+# names(diet)[10] = "SpeciesID"
 #-----------------------------------------------------------------------------#
 # cut down to some of the common prey (exclude "NEMA" - the mass regression sees way high)
 keep = c("CHIL", "SIML", "CHIP", "CHIA", "SIMA", "SIMP", "HEMA", "GAMM", "HYMA",
@@ -105,7 +105,7 @@ for(i in 1:length(id)){
   total = sum(sub$TotalMass)
   
   out[[i]] = data.frame(id = sub$PITTagID,
-                        species = sub$FishSpecies,
+                        species = sub$FishSpeciesID,
                         forklength = sub$ForkLength,
                         prey = sub$prey,
                         # turb = sub$ts.mean,
@@ -147,13 +147,13 @@ p
 
 # t1 = proc.time()
 
-fit.1 = brm(prop ~ prey,
-            data = bnt, family = "Beta", chains = 3)
+# fit.1 = brm(prop ~ prey,
+#             data = bnt, family = "Beta", chains = 3)
 # chains = nc, iter = ni, warmup = nb, thin = nt)
 # control = list(max_treedepth = 12, adapt_delta = .9))
 # t2 = proc.time()
-fit.2 = brm(prop ~ prey,
-            data = rbt, family = "Beta", chains = 3)
+# fit.2 = brm(prop ~ prey,
+#             data = rbt, family = "Beta", chains = 3)
 # chains = nc, iter = ni, warmup = nb, thin = nt)
 # control = list(max_treedepth = 12, adapt_delta = .9))
 # t2 = proc.time()
