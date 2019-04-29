@@ -3,10 +3,10 @@
 #                     Gastric Lavage - Beta Regression
 #
 #  Notes:
-#  * 
+#  * Small model selection section
 #
 #  To Do:
-#  * Model selection? LOO?
+#  * 
 #
 ###############################################################################
 library(rstan)
@@ -123,20 +123,43 @@ p = ggplot(all, aes(x = prey, y = prop)) +
   geom_boxplot(aes(color = dow, fill = dow), alpha = .5)
 p 
 
+p = ggplot(all, aes(x = prey, y = prop)) +
+  geom_boxplot(aes(color = flow, fill = dow), alpha = .5)
+p 
+
 
 #-----------------------------------------------------------------------------#
+# fit some models and compare
 
+fit.1 = brm(prop ~ 1,
+            data = all, family = "Beta", chains = 3)
 
-fit.1 = brm(prop ~ flow * prey,
+fit.2 = brm(prop ~ prey,
+            data = all, family = "Beta", chains = 3)
+
+fit.3 = brm(prop ~ flow,
+            data = all, family = "Beta", chains = 3)
+
+fit.4 = brm(prop ~ flow + prey,
+            data = all, family = "Beta", chains = 3)
+
+# Winner, for now
+fit.5 = brm(prop ~ flow * prey,
+            data = all, family = "Beta", chains = 3)
+
+fit.6 = brm(prop ~ dow + prey,
+            data = all, family = "Beta", chains = 3)
+
+fit.7 = brm(prop ~ dow * prey,
             data = all, family = "Beta", chains = 3)
 
 
-waic(fit.1)
-loo(fit.1)
+waic(fit.1, fit.2, fit.3, fit.4, fit.5, fit.6, fit.7)
+loo(fit.1, fit.2, fit.3, fit.4, fit.5, fit.6, fit.7)
 #-----------------------------------------------------------------------------#
+# look at model predictions
 
-
-effects = data_grid(all, flow, prey) %>% add_fitted_draws(fit.1)
+effects = data_grid(all, flow, prey) %>% add_fitted_draws(fit.5)
 
 # sort based on precents of prey
 tmp = filter(effects, flow == "Weekend") %>%
