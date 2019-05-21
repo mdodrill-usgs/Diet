@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                      April 19
-#                     Gut Fullness - Logistic Reg 
+#                 Gut Fullness - Data Prep for Hurdle Models
 #  
 #  Notes:
 #  * Added:
@@ -19,12 +19,8 @@
 ###############################################################################
 library(rstan)
 library(brms)
-# library(ggplot2)
 library(dplyr)
 library(foodbase)
-# library(ggthemes)
-# library(tidybayes)
-# library(modelr)
 library(suncalc)
 library(arm)
 
@@ -164,10 +160,7 @@ keep.col.2 = c("BarcodeID",
              "Volume")
 # "Notes")
 
-
 ltl.samp = drift.dat$Samples[,which(names(drift.dat$Samples) %in% keep.col.2)] 
-
-
 
 ltl.samp$no.site = ifelse(ltl.samp$RiverMile <= 0, 'I',
                       ifelse(ltl.samp$RiverMile >= 17.22 & ltl.samp$RiverMile <= 20.58, 'II', 
@@ -209,7 +202,6 @@ t.dat = dplyr::select(no.drift.dat, no.trip = TripID, no.site,
 dat3 = group_by(t.dat, no.trip, no.site) %>%
   summarise(drift.mass = sum(avg.mass))
 
-
 #-----------------------------------------------------------------------------#
 # put the pieces together
 
@@ -225,7 +217,6 @@ diet.5 = left_join(diet.4, d.turb, by = c("no.trip", "no.site"))
 # add in temperatures
 diet.6 = left_join(diet.5, d.temp, by = c("no.trip", "no.site"))
 
-
 #-----------------------------------------------------------------------------#    # need to check this section
 # Add the time since sunset piece...
 
@@ -235,11 +226,33 @@ my.long = c(-111.589680)
 
 sunset = getSunlightTimes(date = diet.6$Date, lat = my.lat, lon = my.long, tz = "MST")
 
-sunset.time = substr(sunset$sunset, 12, 16)
+# sunset.time = substr(sunset$sunset, 12, 16)
+sunset.time = sunset$sunset
 
-tmp.tss = difftime(strptime(diet.6$Time, "%H:%M"), strptime(sunset.time, "%H:%M"), units = "mins")
+# tmp.tss = difftime(strptime(diet.6$Time, "%H:%M"), strptime(sunset.time, "%H:%M"), units = "mins")
+tmp.tss = difftime(strptime(paste(diet.6$Date, diet.6$Time), "%Y-%m-%d %H:%M"),
+                   strptime(sunset$sunset, "%Y-%m-%d %H:%M"), units = "mins")
 
-diet.6$tss = ifelse(tmp.tss <= 0, 0, tmp.tss)
+# fix bad tss, because 1). fish sample taken after midnight and the date (in the
+# data) doesn't change and 2). fish sample taken before sunset. Correct these by
+# 1). changing the date and recalculating, or 2). assuming 1 min after sunset.
+out = vector()
+
+for(i in 1:length(tmp.tss)){
+  if(tmp.tss[i] <= 0 & tmp.tss[i] <= -150){  # when fish sample is taken past midnight
+    out[i] = difftime(strptime(paste(diet.6$Date[i] + 1, diet.6$Time[i]), "%Y-%m-%d %H:%M"),
+                      strptime(sunset.time[i], "%Y-%m-%d %H:%M"), units = "mins")
+  } else {
+    if(tmp.tss[i] <= 0){ # when fish sample is taken before sunset
+      out[i] = 1
+    } else {
+      out[i] = tmp.tss[i]      
+    }
+  }
+}
+
+
+diet.6$tss = out
 
 dat.in = diet.6
 #-----------------------------------------------------------------------------#
@@ -253,26 +266,4 @@ dat.in$tss.2 = rescale(dat.in$tss)
 dat.in$mean.temp.2 = rescale(dat.in$mean.temp)
 
 #-----------------------------------------------------------------------------#
-# fit some models 
-
-
-
-fit.1 = brm(bf(est.mass.g ~ density.2 + (1|no.trip.site), hu ~ density.2 + (1|no.trip.site)), 
-          data = dat.in, 
-          family = "hurdle_lognormal",
-          chains = 3, iter = 1000)
-
-fit.2 = brm(bf(est.mass.g ~ ts.mean.2 + (1|no.trip.site), hu ~ ts.mean.2 + (1|no.trip.site)), 
-          data = dat.in, 
-          family = "hurdle_lognormal",
-          chains = 3, iter = 1000)
-
-
-waic(fit.1, fit.2)
-# loo(fit)
-
-
-#-----------------------------------------------------------------------------#
-
-
-
+# End
