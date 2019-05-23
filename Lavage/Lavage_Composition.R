@@ -100,7 +100,7 @@ test$prop = test$tot.mass / test$all.mass
 
 #--------------------------------------
 # plot
-windows(xpos = 25, record = TRUE)
+windows(xpos = 25, record = TRUE, height = 7.5, width = 13.33) # default size of pp slide
 
 
 p = ggplot(test, aes(x = dow, y = prop)) +
@@ -129,7 +129,7 @@ test$prop = test$tot.mass / test$all.mass
 
 #--------------------------------------
 # plot
-windows(xpos = 25, record = TRUE)
+# windows(xpos = 25, record = TRUE)
 
 
 p = ggplot(test, aes(x = dow, y = prop)) +

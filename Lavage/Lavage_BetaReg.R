@@ -180,7 +180,7 @@ p = ggplot(effects, aes(x = prey2, y = .value)) +
          color = "") +
     coord_flip() +
     theme_base() +
-    theme(legend.position = c(.85,.925))
+    theme(legend.position = c(.85,.92))
 p
 
 
