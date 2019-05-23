@@ -17,6 +17,7 @@
 library(rstan)
 library(brms)
 library(ggplot2)
+library(ggthemes)
 library(dplyr)
 library(foodbase)
 library(tidybayes)
@@ -181,7 +182,7 @@ fit.7 = brm(prop ~ species * prey * forklength.2,
 
 waic(fit.1, fit.2, fit.3, fit.4, fit.5)
 
-waic(fit.6, fit.7)
+waic(fit.6, fit.7, fit.5)
 
 #-----------------------------------------------------------------------------#
 effects = data_grid(all, species, prey) %>% add_fitted_draws(fit.5)
@@ -217,14 +218,40 @@ pred.in = effects[effects$species == "BNT",]
 p = ggplot(pred.in, aes(x = forklength.2, y = .value)) +
     stat_lineribbon(aes(y = .value)) +
     facet_wrap(~ prey) +
-    labs(title = "BNT")
-    # coord_flip()
+    labs(title = "BNT", y = "Proportion", x = "Standardized Fork Length") #+
+    # theme_base()
+    
 p
 
 
 plot(marginal_effects(fit.6), rug = TRUE, ask = FALSE)
 #-----------------------------------------------------------------------------#
 
+pred.in = effects
+
+p = ggplot(pred.in, aes(x = forklength.2, y = .value)) +
+  stat_lineribbon(aes(y = .value, color = species), .width = .9) +
+  facet_wrap(~ prey) +
+  labs(title = "BNT", y = "Proportion", x = "Standardized Fork Length") #+
+# theme_base()
+
+p
+
+
+
+test = point_interval(effects)
+
+
+p = ggplot(test, aes(x = forklength.2, y = .value)) +
+    geom_line(aes(color = species)) +
+    geom_ribbon(aes(ymin = .lower, ymax = .upper, fill = species), alpha = .25) +
+    facet_wrap(~ prey) +
+    labs(y = "Proportion by Mass in Diet", x = "Standardized Fork Length") +
+    theme_base() +
+    theme(legend.position = c(.85,.15),
+          plot.margin = margin(1, 1, 1, 1, "cm"),
+          panel.spacing = unit(1, "lines"))
+p
 
 #-----------------------------------------------------------------------------#
 # End
