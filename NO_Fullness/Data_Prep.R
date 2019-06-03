@@ -17,15 +17,12 @@
 #  * 
 #
 ###############################################################################
-library(rstan)
-library(brms)
+# library(devtools)
+# install_github(repo = 'jmuehlbauer-usgs/R-packages', subdir = 'foodbase')
 library(dplyr)
 library(foodbase)
 library(suncalc)
 library(arm)
-
-rstan_options(auto_write = TRUE)
-options (mc.cores=parallel::detectCores()) # Run on multiple cores
 
 # d.tmp = readDB(gear = "FishGut", type = "Sample", updater = TRUE)
 d.tmp = readDB(gear = "FishGut", type = "Sample", updater = FALSE)
@@ -121,6 +118,8 @@ trout$density = ifelse(trout$site == "IVb", trout$N / 5750, trout$N / 4000)
 
 names(trout)[1:2] = c("no.site", "no.trip")
 
+# write this out, so I can use it in the selection model
+# write.table(trout, file = "RBT_Density.txt", row.names = F, sep = "\t")
 #-----------------------------------------------------------------------------#
 # Temperature and Turbidity 
 setwd('U:/Desktop/FB_Git/Diet/NO_Fullness/Data')
@@ -256,14 +255,34 @@ diet.6$tss = out
 
 dat.in = diet.6
 #-----------------------------------------------------------------------------#
+# There are some missing fish weights, so predict weight, given length
+# email from Eldo, where Korman provides the a & b parms, don't handle the
+# sigma, these are from a log ~ log regression
+a = -11.1584485245053
+b = 2.9485978095191
+# sigma = 0.153933682398055
+
+# tl = seq(10,400,10)
+# pred.wt = exp(a + b*log(tl))
+
+dat.in$Weight = ifelse(is.na(dat.in$Weight),
+                       exp(a + b*log(dat.in$ForkLength)),
+                           dat.in$Weight)
+#-----------------------------------------------------------------------------#
+# there is a bad fork length - take it out
+dat.in = dat.in[-172,]
+
+#-----------------------------------------------------------------------------#
 dat.in$no.trip.site = as.factor(paste(dat.in$no.trip, dat.in$no.site))
 
 # scale and center
 dat.in$ts.mean.2 = rescale(log(dat.in$ts.mean))
+dat.in$ts.mean.3 = rescale(dat.in$ts.mean)
 dat.in$drift.mass.2 = rescale(dat.in$drift.mass)
 dat.in$density.2 = rescale(dat.in$density)
 dat.in$tss.2 = rescale(dat.in$tss)
 dat.in$mean.temp.2 = rescale(dat.in$mean.temp)
 
+rm(list=setdiff(ls(), "dat.in"))
 #-----------------------------------------------------------------------------#
 # End
