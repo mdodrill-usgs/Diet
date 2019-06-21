@@ -209,6 +209,21 @@ dat3 = group_by(t.dat, no.trip, no.site) %>%
   summarise(drift.mass = sum(avg.mass))
 
 #-----------------------------------------------------------------------------#
+# Competition index
+NO_trips = c('GC20120419','GC20120705','GC20120913','GC20130110',
+             'GC20130404','GC20130625','GC20130912','GC20140109',
+             'GC20140403','GC20140626','GC20140911','GC20150108')
+
+c.dat = read.csv(paste0(getwd(), "/Comp_Idx.csv"), stringsAsFactors = FALSE)
+
+c.dat$no.trip = rep(NO_trips, 5)
+
+c.dat = c.dat[,c(1,4,3)]
+
+# c.dat.2 = c.dat[match(diet.ts, paste(c.dat[,4], c.dat[,1])),]
+
+# comp = as.vector(scale(c.dat.2$Comp, center = T, scale = T))
+#-----------------------------------------------------------------------------#
 # put the pieces together
 
 # add in drift
@@ -223,6 +238,9 @@ diet.5 = left_join(diet.4, d.turb, by = c("no.trip", "no.site"))
 # add in temperatures
 diet.6 = left_join(diet.5, d.temp, by = c("no.trip", "no.site"))
 
+# add in the competion index
+diet.7 = left_join(diet.6, c.dat, by = c("no.trip", "no.site"))
+
 #-----------------------------------------------------------------------------#    # need to check this section
 # Add the time since sunset piece...
 
@@ -230,13 +248,13 @@ diet.6 = left_join(diet.5, d.temp, by = c("no.trip", "no.site"))
 my.lat = c(36.865545)
 my.long = c(-111.589680)
 
-sunset = getSunlightTimes(date = diet.6$Date, lat = my.lat, lon = my.long, tz = "MST")
+sunset = getSunlightTimes(date = diet.7$Date, lat = my.lat, lon = my.long, tz = "MST")
 
 # sunset.time = substr(sunset$sunset, 12, 16)
 sunset.time = sunset$sunset
 
-# tmp.tss = difftime(strptime(diet.6$Time, "%H:%M"), strptime(sunset.time, "%H:%M"), units = "mins")
-tmp.tss = difftime(strptime(paste(diet.6$Date, diet.6$Time), "%Y-%m-%d %H:%M"),
+# tmp.tss = difftime(strptime(diet.7$Time, "%H:%M"), strptime(sunset.time, "%H:%M"), units = "mins")
+tmp.tss = difftime(strptime(paste(diet.7$Date, diet.7$Time), "%Y-%m-%d %H:%M"),
                    strptime(sunset$sunset, "%Y-%m-%d %H:%M"), units = "mins")
 
 # fix bad tss, because 1). fish sample taken after midnight and the date (in the
@@ -246,7 +264,7 @@ out = vector()
 
 for(i in 1:length(tmp.tss)){
   if(tmp.tss[i] <= 0 & tmp.tss[i] <= -150){  # when fish sample is taken past midnight
-    out[i] = difftime(strptime(paste(diet.6$Date[i] + 1, diet.6$Time[i]), "%Y-%m-%d %H:%M"),
+    out[i] = difftime(strptime(paste(diet.7$Date[i] + 1, diet.7$Time[i]), "%Y-%m-%d %H:%M"),
                       strptime(sunset.time[i], "%Y-%m-%d %H:%M"), units = "mins")
   } else {
     if(tmp.tss[i] <= 0){ # when fish sample is taken before sunset
@@ -258,9 +276,9 @@ for(i in 1:length(tmp.tss)){
 }
 
 
-diet.6$tss = out
+diet.7$tss = out
 
-dat.in = diet.6
+dat.in = diet.7
 #-----------------------------------------------------------------------------#
 # There are some missing fish weights, so predict weight, given length
 # email from Eldo, where Korman provides the a & b parms, don't handle the
@@ -290,6 +308,7 @@ dat.in$density.2 = rescale(dat.in$density)
 dat.in$tss.2 = rescale(dat.in$tss)
 dat.in$mean.temp.2 = rescale(dat.in$mean.temp)
 dat.in$turb.pmr.2 = rescale(dat.in$turb.pmr)
+dat.in$Comp.2 = rescale(dat.in$Comp)
 
 rm(list=setdiff(ls(), "dat.in"))
 #-----------------------------------------------------------------------------#
