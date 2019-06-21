@@ -129,6 +129,13 @@ names(d.turb)[1:2] = c("no.trip", "no.site")  # so I can merge below
 d.temp = read.table(file = "NO_Temp_ts_summary.csv", header = T, sep = ",")
 names(d.temp)[1:2] = c("no.trip", "no.site")  # so I can merge below
 
+#--------------------------------------
+# Turb pmr
+# Rosenfeld and Taylor 2003
+tmp.turb.pmr = 100 - (44.8 * log10(d.turb$ts.mean + 1))
+
+d.turb$turb.pmr = ifelse(tmp.turb.pmr < 0, 0, tmp.turb.pmr)
+
 #-----------------------------------------------------------------------------#
 # Bring in the drift data!
 
@@ -282,6 +289,7 @@ dat.in$drift.mass.2 = rescale(dat.in$drift.mass)
 dat.in$density.2 = rescale(dat.in$density)
 dat.in$tss.2 = rescale(dat.in$tss)
 dat.in$mean.temp.2 = rescale(dat.in$mean.temp)
+dat.in$turb.pmr.2 = rescale(dat.in$turb.pmr)
 
 rm(list=setdiff(ls(), "dat.in"))
 #-----------------------------------------------------------------------------#
